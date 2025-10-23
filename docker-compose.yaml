@@ -1,0 +1,18 @@
+services:
+  # 'db'는 이 서비스의 별명입니다.
+  db:
+    image: postgres:17
+    container_name: db # 컨테이너 이름 (기존과 동일하게)
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: db
+    ports:
+      - "5432:5432" # 포트 연결
+    volumes:
+      - postgres-data:/var/lib/postgresql/data # 볼륨 연결
+    restart: unless-stopped
+
+# Docker가 관리할 볼륨을 정의합니다.
+volumes:
+  postgres-data:

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import Header from '@/components/Header'; // 공통 헤더를 불러옵니다.
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { prisma } from '@/lib/prisma';
 
 // 최근 지출 내역을 위한 가짜(Mock) 데이터
 const mockTransactions = [
