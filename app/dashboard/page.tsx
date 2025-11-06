@@ -68,7 +68,36 @@ export default function DashboardPage() {
                         파일이 선택되었습니다: {selectedFile.name}
                       </p>
                       <div className="mt-4">
-                        <Button>업로드하기</Button>
+                        <Button onClick={async () => {
+                          if (!selectedFile) return;
+
+                          const formData = new FormData();
+                          formData.append('image', selectedFile);
+
+                          try {
+                            const response = await fetch('/api/receipts', {
+                              method: 'POST',
+                              body: formData,
+                            });
+
+                            if (!response.ok) {
+                              const errorData = await response.json();
+                              throw new Error(errorData.error || '업로드 실패');
+                            }
+
+                            const result = await response.json();
+                            console.log('Receipt processing result:', result);
+
+                            // 성공적으로 업로드됨
+                            alert('영수증이 성공적으로 처리되었습니다.');
+                            setSelectedFile(null);
+                          } catch (error) {
+                            alert('업로드 중 오류가 발생했습니다.');
+                            console.error('Upload error:', error);
+                          }
+                        }}>
+                          업로드하기
+                        </Button>
                         <Button variant="ghost" onClick={() => setSelectedFile(null)} className="ml-2">
                           취소
                         </Button>
