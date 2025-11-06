@@ -7,14 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useRouter } from 'next/navigation';
 
 export default function SignupPage() {
+  const router = useRouter();
   // email, password 외에 '비밀번호 확인'을 위한 상태를 추가합니다.
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: 비밀번호와 비밀번호 확인이 일치하는지 확인하는 로직 추가
     if (password !== confirmPassword) {
@@ -23,6 +25,25 @@ export default function SignupPage() {
     }
     console.log('회원가입 시도 데이터:', { email, password, confirmPassword });
     // 추후 이 곳에서 백엔드 API로 데이터를 전송하게 됩니다.
+
+    const response = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        "email": email,
+        "password": password
+      }),
+    });
+
+    if (response.ok) {
+      alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
+      // 회원가입 성공 시 로그인 페이지로 리다이렉트
+      router.push('/login');
+    } else {
+      alert('회원가입에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   return (
