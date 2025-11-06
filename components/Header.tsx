@@ -64,7 +64,7 @@ export default function Header() {
               </Button>
             ) : (
               <>
-                <Link href="/login" className="text-gray-600 hover:text-blue-600">
+                <Link href="/login" className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">
                   로그인
                 </Link>
                 <Link href="/signup" className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">
