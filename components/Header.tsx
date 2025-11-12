@@ -1,33 +1,23 @@
-// file: components/Header.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+// import { useEffect, useState } from 'react' // (삭제) 더 이상 수동으로 상태 관리 안 함
 import Link from 'next/link'
 import { Button } from './ui/button'
 
+// (★추가★) 3단계에서 만든 useAuth 훅을 import합니다.
+import { useAuth } from '@/contexts/AuthContext';
+
 export default function Header() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  // (★수정★)
+  // AuthContext에서 현재 'accessToken'과 'logout' 함수를 가져옵니다.
+  // 'isLoading'은 AuthContext에서 처리하므로 여기서 신경 쓸 필요 없습니다.
+  const { accessToken, logout } = useAuth();
 
-  useEffect(() => {
-    // localStorage는 클라이언트에서만 사용 가능하므로 useEffect 안에서 읽습니다.
-    try {
-      const token = localStorage.getItem('access_token')
-      setIsLoggedIn(!!token)
-    } catch (e) {
-      // 안전하게 무시: 일부 환경에서 localStorage 접근이 실패할 수 있습니다.
-      setIsLoggedIn(false)
-    }
-
-    // 다른 탭에서 로그인 상태 변경을 반영하려면 storage 이벤트를 수신합니다.
-    const handleStorage = (ev: StorageEvent) => {
-      if (ev.key === 'access_token') {
-        setIsLoggedIn(!!ev.newValue)
-      }
-    }
-
-    window.addEventListener('storage', handleStorage)
-    return () => window.removeEventListener('storage', handleStorage)
-  }, [])
+  // (★삭제★)
+  // localStorage를 직접 읽고, storage 이벤트를 감시하던
+  // 복잡한 useEffect 로직을 전부 삭제합니다.
+  // const [isLoggedIn, setIsLoggedIn] = useState(false)
+  // useEffect(() => { ... }, [])
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -53,16 +43,22 @@ export default function Header() {
 
           {/* 로그인/회원가입 버튼 */}
           <div className="flex items-center space-x-4">
-            {isLoggedIn ? (
-              <Button className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            
+            {/* (★수정★) isLoggedIn 대신 accessToken의 유무로 판단합니다. */}
+            {accessToken ? (
+              // 로그인된 상태: 로그아웃 버튼 표시
+              <Button 
+                className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
                 onClick={() => {
-                  localStorage.removeItem('access_token');
-                  localStorage.removeItem('refresh_token');
-                  setIsLoggedIn(false);
+                  // (★수정★)
+                  // localStorage를 직접 삭제하는 대신, AuthContext의 logout() 함수 호출
+                  // 이 함수는 API 호출, localStorage/Context 상태 제거, 라우팅을 모두 처리합니다.
+                  logout(); 
                 }}>
                 로그아웃
               </Button>
             ) : (
+              // 로그아웃된 상태: 로그인/회원가입 버튼 표시
               <>
                 <Link href="/login" className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">
                   로그인

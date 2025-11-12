@@ -1,48 +1,45 @@
-// file: app/signup/page.tsx
-'use client';
+'use client'; 
 
 import { useState } from 'react';
 import Link from 'next/link';
+// import { useRouter } from 'next/navigation'; // (삭제) AuthContext가 라우팅을 처리합니다.
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useRouter } from 'next/navigation';
 
-export default function SignupPage() {
-  const router = useRouter();
-  // email, password 외에 '비밀번호 확인'을 위한 상태를 추가합니다.
+// (★추가★) 3단계에서 만든 useAuth 훅을 import합니다.
+import { useAuth } from '@/contexts/AuthContext';
+
+export default function LoginPage() {
+  // const router = useRouter(); // (삭제)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [userName, setUserName] = useState(''); 
+  const [error, setError] = useState('');
 
+  // (★추가★) AuthContext에서 login 함수를 가져옵니다.
+  const { login } = useAuth();
+
+  // 로그인 버튼 클릭 시 실행될 함수입니다.
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: 비밀번호와 비밀번호 확인이 일치하는지 확인하는 로직 추가
-    if (password !== confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.');
-      return;
-    }
-    console.log('회원가입 시도 데이터:', { email, password, confirmPassword });
-    // 추후 이 곳에서 백엔드 API로 데이터를 전송하게 됩니다.
+    e.preventDefault(); 
+    setError(''); 
+    
+    try {
+      // (★수정★)
+      // 기존 fetch 로직 대신, AuthContext의 login 함수를 호출합니다.
+      // 이 login 함수는 내부적으로 API 호출, 토큰 저장, /dashboard로 라우팅까지 모두 처리합니다.
+      await login(email, password);
 
-    const response = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        "email": email,
-        "password": password
-      }),
-    });
+      // (성공 시 /dashboard로 자동 이동되므로 별도 처리가 필요 없습니다.)
 
-    if (response.ok) {
-      alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
-      // 회원가입 성공 시 로그인 페이지로 리다이렉트
-      router.push('/login');
-    } else {
-      alert('회원가입에 실패했습니다. 다시 시도해주세요.');
+    } catch (err: any) {
+      // (★수정★)
+      // login() 함수가 실패하면 (예: 401 에러) AuthContext가 에러를 throw합니다.
+      // 백엔드 또는 프록시가 보낸 에러 메시지를 표시합니다.
+      const errorMessage = err.response?.data?.error || err.message || '로그인 중 오류가 발생했습니다.';
+      setError(errorMessage);
     }
   };
 
@@ -50,13 +47,23 @@ export default function SignupPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">회원가입</CardTitle>
+          {userName && (
+            <div className="mb-4 text-center text-xl font-semibold text-gray-800">
+              환영합니다, {userName}님!
+            </div>
+          )}
+          <CardTitle className="text-2xl">로그인</CardTitle>
           <CardDescription>
-            새로운 계정을 만들기 위해 정보를 입력해주세요.
+            이메일과 비밀번호를 입력하여 로그인하세요.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
+            {error && (
+              <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded">
+                {error}
+              </div>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="email">이메일</Label>
               <Input
@@ -64,7 +71,7 @@ export default function SignupPage() {
                 type="email"
                 placeholder="name@example.com"
                 required
-                value={email}
+                value={email} 
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
@@ -78,25 +85,14 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            {/* 비밀번호 확인 필드를 추가합니다. */}
-            <div className="grid gap-2">
-              <Label htmlFor="confirm-password">비밀번호 확인</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
             <Button type="submit" className="w-full">
-              계정 생성하기
+              로그인
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            이미 계정이 있으신가요?{' '}
-            <Link href="/login" className="underline">
-              로그인
+            계정이 없으신가요?{' '}
+            <Link href="/signup" className="underline">
+              회원가입
             </Link>
           </div>
         </CardContent>
