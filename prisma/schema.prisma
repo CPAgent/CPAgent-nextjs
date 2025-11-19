@@ -1,0 +1,54 @@
+// 5단계: prisma/schema.prisma 파일의 전체 내용
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------
+// 1. 유저 테이블
+// ----------------------------------------------
+model User {
+  id       String  @id @default(uuid()) // 유저 ID (PK)
+  email    String  @unique // 사용자 이메일
+  name     String // 사용자 이름
+
+  // 관계 설정: User (1) -> Receipt (N)
+  receipts Receipt[]
+}
+
+// ----------------------------------------------
+// 2. 영수증 테이블
+// ----------------------------------------------
+model Receipt {
+  id          Int      @id @default(autoincrement()) // 영수증 ID (PK)
+  imageUrl    String // 영수증 사진 (S3 URL)
+  paymentType String // 결제 방식 ("CASH", "CARD")
+  totalPrice  Int // 총 가격
+  createdAt   DateTime @default(now()) // 생성 날짜
+
+  // 관계 설정: Receipt (N) -> User (1)
+  user   User @relation(fields: [userId], references: [id])
+  userId String // User ID (FK)
+
+  // 관계 설정: Receipt (1) -> Item (N)
+  items Item[]
+}
+
+// ----------------------------------------------
+// 3. 물품 테이블
+// ----------------------------------------------
+model Item {
+  id       Int    @id @default(autoincrement()) // 물품 ID (PK)
+  category String // 상품 카테고리
+  name     String // 상품 명
+  price    Int // 금액 (개별 상품 금액)
+
+  // 관계 설정: Item (N) -> Receipt (1)
+  receipt   Receipt @relation(fields: [receiptId], references: [id])
+  receiptId Int // 영수증 ID (FK)
+}
