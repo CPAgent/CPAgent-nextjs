@@ -11,38 +11,57 @@ import { useRouter } from 'next/navigation';
 
 export default function SignupPage() {
   const router = useRouter();
-  // email, password 외에 '비밀번호 확인'을 위한 상태를 추가합니다.
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: 비밀번호와 비밀번호 확인이 일치하는지 확인하는 로직 추가
+    setError('');
+
     if (password !== confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.');
+      setError('비밀번호가 일치하지 않습니다.');
       return;
     }
-    console.log('회원가입 시도 데이터:', { email, password, confirmPassword });
-    // 추후 이 곳에서 백엔드 API로 데이터를 전송하게 됩니다.
 
-    const response = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        "email": email,
-        "password": password
-      }),
-    });
+    if (password.length < 6) {
+      setError('비밀번호는 최소 6자 이상이어야 합니다.');
+      return;
+    }
 
-    if (response.ok) {
-      alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
-      // 회원가입 성공 시 로그인 페이지로 리다이렉트
-      router.push('/login');
-    } else {
-      alert('회원가입에 실패했습니다. 다시 시도해주세요.');
+    try {
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          phone
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error?.message || '회원가입에 실패했습니다.');
+      }
+
+      // 토큰 저장
+      if (data.data?.token) {
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("refreshToken", data.data.refreshToken);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        alert('회원가입이 완료되었습니다!');
+        router.push('/dashboard');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '회원가입 중 오류가 발생했습니다.');
     }
   };
 
@@ -53,7 +72,7 @@ export default function SignupPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <Link href="/" className="inline-block">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2 py-1">
                 CPAgent
               </h1>
             </Link>
@@ -63,7 +82,31 @@ export default function SignupPage() {
 
           <Card className="border-2 shadow-xl">
             <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {error && (
+                  <div className="flex items-center gap-2 p-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    {error}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-semibold text-gray-700">
+                    이름
+                  </Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="홍길동"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="h-12 text-base"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
                     이메일 주소
@@ -75,6 +118,20 @@ export default function SignupPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 text-base"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">
+                    전화번호 (선택)
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="010-1234-5678"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     className="h-12 text-base"
                   />
                 </div>
@@ -92,7 +149,7 @@ export default function SignupPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="h-12 text-base"
                   />
-                  <p className="text-xs text-gray-500 mt-1">최소 8자 이상 입력해주세요</p>
+                  <p className="text-xs text-gray-500 mt-1">최소 6자 이상 입력해주세요</p>
                 </div>
 
                 <div className="space-y-2">

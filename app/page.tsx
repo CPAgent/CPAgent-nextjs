@@ -1,7 +1,9 @@
 // file: app/page.tsx
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -15,8 +17,24 @@ import {
   ArrowRight,
   CheckCircle2
 } from 'lucide-react';
+import { isLoggedIn } from '@/lib/client-auth';
 
 export default function HomePage() {
+  const router = useRouter();
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsUserLoggedIn(isLoggedIn());
+  }, []);
+
+  const handleStartClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isUserLoggedIn) {
+      router.push('/transactions/upload');
+    } else {
+      router.push('/login');
+    }
+  };
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Header />
@@ -72,19 +90,37 @@ export default function HomePage() {
                 transition={{ duration: 0.5, delay: 0.3 }}
                 className="flex flex-col sm:flex-row gap-4 justify-center items-center"
               >
-                <Link
-                  href="/login"
-                  className="group inline-flex items-center gap-2 px-8 py-4 text-lg font-bold text-white bg-blue-600 rounded-lg shadow-2xl hover:bg-blue-700 hover:shadow-3xl hover:scale-105 transition-all duration-200"
+                <button
+                  onClick={handleStartClick}
+                  className="group relative inline-flex items-center justify-center gap-2 px-10 py-4 text-lg font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-[0_8px_30px_rgb(37,99,235,0.3)] hover:shadow-[0_12px_40px_rgb(37,99,235,0.4)] hover:scale-[1.02] transition-all duration-300 overflow-hidden"
                 >
-                  무료로 시작하기
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center gap-2 px-8 py-4 text-lg font-bold text-gray-800 bg-white rounded-lg hover:bg-gray-50 shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  데모 보기
-                </Link>
+                  <span className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                  <span className="relative flex items-center gap-2">
+                    {isUserLoggedIn ? (
+                      <>
+                        <Camera className="w-5 h-5" />
+                        영수증 업로드하기
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-5 h-5" />
+                        무료로 시작하기
+                      </>
+                    )}
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                  </span>
+                </button>
+                
+                {!isUserLoggedIn && (
+                  <Link
+                    href="/dashboard"
+                    className="group relative inline-flex items-center justify-center gap-2 px-10 py-4 text-lg font-bold text-blue-700 bg-white/95 backdrop-blur-sm rounded-xl border-2 border-white/50 shadow-[0_8px_30px_rgba(255,255,255,0.3)] hover:bg-white hover:shadow-[0_12px_40px_rgba(255,255,255,0.5)] hover:scale-[1.02] transition-all duration-300"
+                  >
+                    <PieChart className="w-5 h-5" />
+                    <span>데모 체험하기</span>
+                    <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 -ml-5 group-hover:ml-0 transition-all duration-300" />
+                  </Link>
+                )}
               </motion.div>
 
               <motion.div

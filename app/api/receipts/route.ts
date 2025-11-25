@@ -1,8 +1,24 @@
-// API 엔드포인트 파일 생성 
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server'
+import { authenticateRequest } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { successResponse, errorResponse, ErrorCodes } from '@/lib/api-response'
 
-export async function POST(request: Request) {
-  // 이미지의 요청을 받으면 이걸 OCR API 서버에 전달하고
-  // JSON 형식의 데이터를 받으면 바로 리턴하는게 아니고
-  // DB 서버에 데이터를 저장해야한다.
+// 영수증 목록 조회
+export async function GET(request: NextRequest) {
+  try {
+    const user = await authenticateRequest(request)
+    if (!user) {
+      return errorResponse(ErrorCodes.AUTH_001.code, ErrorCodes.AUTH_001.message, ErrorCodes.AUTH_001.status)
+    }
+
+    const receipts = await db.findReceiptsByUserId(user.userId)
+
+    return successResponse({
+      receipts,
+      count: receipts.length,
+    })
+  } catch (error) {
+    console.error('Get receipts error:', error)
+    return errorResponse(ErrorCodes.SERVER_001.code, ErrorCodes.SERVER_001.message, ErrorCodes.SERVER_001.status)
+  }
 }

@@ -19,8 +19,8 @@ export default function LoginPage() {
 
   // 로그인 버튼 클릭 시 실행될 함수입니다.
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // form 태그의 기본 동작(페이지 새로고침)을 막습니다.
-    setError(''); // 에러 메시지 초기화
+    e.preventDefault();
+    setError('');
     
     try {
       const response = await fetch("/api/auth/login", {
@@ -29,21 +29,22 @@ export default function LoginPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          "email": email,
-          "password": password
+          email,
+          password
         }),
       });
 
       const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.message || '로그인에 실패했습니다.');
+      if (!data.success) {
+        throw new Error(data.error?.message || '로그인에 실패했습니다.');
       }
 
-      if (data.access_token) {
-        localStorage.setItem("access_token", data.access_token);
-        data.refresh_token && localStorage.setItem("refresh_token", data.refresh_token);
-        router.push('/'); // 홈페이지로 리다이렉트
+      if (data.data?.token) {
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("refreshToken", data.data.refreshToken);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        router.push('/dashboard');
       } else {
         throw new Error('인증 토큰이 없습니다.');
       }
@@ -59,7 +60,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <Link href="/" className="inline-block">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2 py-1">
                 CPAgent
               </h1>
             </Link>
